@@ -1,211 +1,362 @@
-import React, { useState } from 'react';
-import './index.css';
+import React, { useState, useEffect } from 'react';
 
 const LifeCalendar = () => {
-  const [goal] = useState('Stay Consistent');
-  const [startDate] = useState('2026-01-01');
-  const [goalDate] = useState('2026-12-31');
-  const [checkedDays, setCheckedDays] = useState(new Set());
-  
-  // Calculate total days between start and goal date
-  const getTotalDays = () => {
-    const start = new Date(startDate);
-    const end = new Date(goalDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end
-    return diffDays;
-  };
-  
-  const totalDays = getTotalDays();
-  
-  // Helper function to determine if a day index is today
-  const isTodayIndex = (dayIndex) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [stats, setStats] = useState({
+    daysCompleted: 0,
+    totalDays: 0,
+    percentComplete: 0,
+    daysLeft: 0
+  });
+
+  // iPhone green color (similar to iMessage green)
+  const IPHONE_GREEN = '#34C759';
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDate(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    // Calculate year progress
+    const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
+    const endOfYear = new Date(currentDate.getFullYear(), 11, 31, 23, 59, 59);
+    const totalDays = Math.ceil((endOfYear - startOfYear) / (1000 * 60 * 60 * 24)) + 1;
+    const daysPassed = Math.ceil((currentDate - startOfYear) / (1000 * 60 * 60 * 24));
+    const daysLeft = totalDays - daysPassed;
+    const percentComplete = ((daysPassed / totalDays) * 100).toFixed(1);
+
+    setStats({
+      daysCompleted: daysPassed,
+      totalDays,
+      percentComplete,
+      daysLeft
+    });
+  }, [currentDate]);
+
+ 
+
+  // Generate calendar dots (365 days)
+  const generateCalendarDots = () => {
+    const totalDays = stats.totalDays || 365;
+    const completed = stats.daysCompleted;
+    const columns = 25;
     
-    const dayDate = getDateForDay(dayIndex);
-    dayDate.setHours(0, 0, 0, 0);
+    // Calculate full rows and remaining dots
+    const fullRows = Math.floor(totalDays / columns);
+    const remainingDots = totalDays % columns;
     
-    return dayDate.getTime() === today.getTime();
-  };
-  
-  // Helper function to determine if a day is in the past
-  const isPastDay = (dayIndex) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const allDots = [];
     
-    const dayDate = getDateForDay(dayIndex);
-    dayDate.setHours(0, 0, 0, 0);
-    
-    return dayDate < today;
-  };
-  
-  // Calculate days per row for optimal layout
-  const getDaysPerRow = () => {
-    // Aim for roughly square grid, with slight preference for wider layout
-    return Math.ceil(Math.sqrt(totalDays * 1.5));
-  };
-  
-  const daysPerRow = getDaysPerRow();
-  
-  // Get date for a specific day index
-  const getDateForDay = (dayIndex) => {
-    const start = new Date(startDate);
-    const date = new Date(start);
-    date.setDate(start.getDate() + dayIndex);
-    return date;
-  };
-  
-  // Toggle day completion
-  const toggleDay = (dayIndex) => {
-    const newChecked = new Set(checkedDays);
-    if (newChecked.has(dayIndex)) {
-      newChecked.delete(dayIndex);
-    } else {
-      newChecked.add(dayIndex);
-    }
-    setCheckedDays(newChecked);
-  };
-  
-  // Format date nicely
-  const formatDate = (date) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
-  };
-  
-  // Calculate progress based on days passed
-  const getDaysCompleted = () => {
-    let count = 0;
-    for (let i = 0; i < totalDays; i++) {
-      if (isPastDay(i)) {
-        count++;
+    // Generate full rows
+    for (let row = 0; row < fullRows; row++) {
+      const rowDots = [];
+      for (let col = 0; col < columns; col++) {
+        const i = row * columns + col;
+        const isCompleted = i < completed;
+        const isToday = i === completed - 1;
+        
+        rowDots.push(
+          <div
+            key={i}
+            className={`dot ${isCompleted ? 'completed' : ''} ${isToday ? 'today' : ''}`}
+          />
+        );
       }
+      allDots.push(
+        <div key={`row-${row}`} className="calendar-row">
+          {rowDots}
+        </div>
+      );
     }
-    return count;
+    
+    // Generate last row if there are remaining dots
+    if (remainingDots > 0) {
+      const lastRowDots = [];
+      for (let col = 0; col < remainingDots; col++) {
+        const i = fullRows * columns + col;
+        const isCompleted = i < completed;
+        const isToday = i === completed - 1;
+        
+        lastRowDots.push(
+          <div
+            key={i}
+            className={`dot ${isCompleted ? 'completed' : ''} ${isToday ? 'today' : ''}`}
+          />
+        );
+      }
+      allDots.push(
+        <div key="last-row" className="calendar-row last-row">
+          {lastRowDots}
+        </div>
+      );
+    }
+    
+    return allDots;
   };
-  
-  const daysCompleted = getDaysCompleted();
-  const progress = ((daysCompleted / totalDays) * 100).toFixed(1);
-  
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 sm:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-            {goal}
-          </h1>
-          <p className="text-lg text-gray-300 mb-2">
-            {formatDate(new Date(startDate))} - {formatDate(new Date(goalDate))}
-          </p>
-          <p className="text-xl font-semibold text-gray-200">
-            {totalDays} days to achieve your goal
-          </p>
-          <p className="text-sm text-green-400 mt-2 font-medium">
-            Auto-updating based on current date: {formatDate(new Date())}  
-          </p>
-        </div>
-        
-        {/* Progress Stats */}
-        <div className="bg-gray-800/80 backdrop-blur-sm border border-gray-700 rounded-2xl shadow-2xl p-6 mb-8">
-          <div className="flex flex-col sm:flex-row justify-around items-center gap-6">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-white">{daysCompleted}</p>
-              <p className="text-gray-400">Days Completed</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-white">{totalDays - daysCompleted}</p>
-              <p className="text-gray-400">Days Remaining</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-green-400">{progress}%</p>
-              <p className="text-gray-400">Progress</p>
-            </div>
-          </div>
-          
-          {/* Progress Bar */}
-          <div className="mt-6">
-            <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
-              <div 
-                className="bg-gradient-to-r from-green-500 to-green-400 h-full rounded-full transition-all duration-300 shadow-lg shadow-green-500/50"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        </div>
-        
-        {/* Calendar Grid */}
-        <div className="bg-gray-800/80 backdrop-blur-sm border border-gray-700 rounded-2xl shadow-2xl p-6 sm:p-8">
-          <div 
-            className="grid gap-2 sm:gap-3 justify-center"
-            style={{
-              gridTemplateColumns: `repeat(${Math.min(daysPerRow, 40)}, minmax(0, 1fr))`,
-            }}
-          >
-            {Array.from({ length: totalDays }, (_, index) => {
-              const isChecked = checkedDays.has(index);
-              const date = getDateForDay(index);
-              const isToday = isTodayIndex(index);
-              const isPast = isPastDay(index);
-              
-              // Determine dot status: past = white, today = blinking green, future = gray
-              let dotClass = '';
-              let statusText = '';
-              
-              if (isToday) {
-                dotClass = 'bg-green-500 shadow-green-500/50 animate-pulse';
-                statusText = 'Today';
-              } else if (isPast) {
-                dotClass = 'bg-white';
-                statusText = 'Completed';
-              } else {
-                dotClass = 'bg-gray-700 border border-gray-600';
-                statusText = 'Upcoming';
-              }
-              
-              return (
-                <button
-                  key={index}
-                  onClick={() => toggleDay(index)}
-                  className={`
-                    aspect-square rounded-full
-                    ${dotClass}
-                  `}
-                  title={`${formatDate(date)} - ${statusText}`}
-                  style={{
-                    width: '100%',
-                    minWidth: '8px',
-                    maxWidth: '32px',
-                  }}
-                />
-              );
-            })}
-          </div>
-        </div>
-        
-        {/* Footer Info */}
-        <div className="text-center mt-8 text-gray-400">
-          <p className="text-sm">
-            <span className="inline-block w-3 h-3 bg-white rounded-full mr-2 align-middle"></span>
-            Past days • 
-            <span className="inline-block w-3 h-3 bg-green-500 rounded-full mx-2 align-middle animate-pulse"></span>
-            Today • 
-            <span className="inline-block w-3 h-3 bg-gray-700 border border-gray-600 rounded-full ml-2 align-middle"></span>
-            Future days
-          </p>
-          <p className="text-xs mt-3 text-gray-500">
-            Each dot represents one day of your journey from Jan 1 - Dec 31, 2026
-          </p>
-        </div>
-      </div>
-      
-      <style jsx>{`
-        @media (max-width: 640px) {
-          .grid {
-            gap: 0.375rem;
+    <div className="calendar-container">
+      <style>{`
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        body {
+          background: #000;
+          overflow: hidden;
+        }
+
+        .calendar-container {
+          width: 100vw;
+          height: 100vh;
+          background: #000;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 20px;
+          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+          color: white;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .date-header {
+          text-align: center;
+          margin-bottom: 30px;
+          animation: fadeIn 0.6s ease-out;
+        }
+
+        .date-text {
+          font-size: 15px;
+          font-weight: 400;
+          color: rgba(255, 255, 255, 0.6);
+          letter-spacing: 0.5px;
+          margin-bottom: 12px;
+        }
+
+        .time-display {
+          font-size: 88px;
+          font-weight: 200;
+          letter-spacing: -2px;
+          line-height: 1;
+          color: white;
+          margin-bottom: 25px;
+          font-feature-settings: 'tnum';
+        }
+
+        .progress-info {
+          text-align: center;
+          margin-bottom: 8px;
+        }
+
+        .percent-complete {
+          font-size: 16px;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.8);
+          margin-bottom: 6px;
+        }
+
+        .days-left {
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .calendar-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          max-width: 520px;
+          margin: 0 auto 40px;
+          padding: 0 10px;
+          animation: fadeInUp 0.8s ease-out 0.3s both;
+        }
+
+        .calendar-row {
+          display: flex;
+          gap: 4px;
+        }
+
+        .calendar-row.last-row {
+          justify-content: center;
+        }
+
+        .dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.15);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          flex-shrink: 0;
+        }
+
+        .dot.completed {
+          background: rgba(255, 255, 255, 1);
+        }
+
+        .dot.today {
+          background: ${IPHONE_GREEN};
+          box-shadow: 
+            0 0 12px ${IPHONE_GREEN},
+            0 0 24px rgba(52, 199, 89, 0.4);
+          transform: scale(1.3);
+          animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1.1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(0.6);
+            opacity: 0.8;
+          }
+        }
+
+        .goals-section {
+          text-align: center;
+          margin-top: 30px;
+          animation: fadeIn 1s ease-out 0.6s both;
+        }
+
+        .goals-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: ${IPHONE_GREEN};
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          margin-bottom: 10px;
+        }
+
+        .goals-subtitle {
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(255, 255, 255, 0.5);
+          line-height: 1.5;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        /* Responsive adjustments for mobile */
+        @media (max-width: 768px) {
+          .calendar-container {
+            padding: 30px 15px;
+          }
+
+          .time-display {
+            font-size: 72px;
+          }
+
+          .calendar-grid {
+            gap: 3px;
+            max-width: 400px;
+          }
+
+          .calendar-row {
+            gap: 3px;
+          }
+
+          .dot {
+            width: 6px;
+            height: 6px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .time-display {
+            font-size: 64px;
+          }
+
+          .calendar-grid {
+            gap: 3px;
+            max-width: 320px;
+          }
+
+          .calendar-row {
+            gap: 3px;
+          }
+
+          .dot {
+            width: 5px;
+            height: 5px;
+          }
+        }
+
+        /* iPhone specific optimizations */
+        @media (max-width: 430px) {
+          .calendar-container {
+            padding: 40px 20px;
+            justify-content: flex-start;
+            padding-top: 80px;
+          }
+
+          .time-display {
+            font-size: 80px;
+          }
+
+          .calendar-grid {
+            gap: 2.5px;
+            max-width: 100%;
+            padding: 0 15px;
+          }
+
+          .calendar-row {
+            gap: 2.5px;
+          }
+
+          .dot {
+            width: 4px;
+            height: 4px;
+          }
+
+          .dot.today {
+            width: 5px;
+            height: 5px;
           }
         }
       `}</style>
+
+      <div className="date-header">
+        <div className="progress-info">
+          <div className="percent-complete">{stats.percentComplete}% complete</div>
+          <div className="days-left">{stats.daysLeft} days left in {currentDate.getFullYear()}</div>
+        </div>
+      </div>
+
+      <div className="calendar-grid">
+        {generateCalendarDots()}
+      </div>
+
+      <div className="goals-section">
+        <div className="goals-title">Today Goals</div>
+        <div className="goals-subtitle">Learn something new that improves your life</div>
+      </div>
     </div>
   );
 };
