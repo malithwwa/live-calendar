@@ -1,5 +1,8 @@
 name: Capture Daily Wallpaper
 
+permissions:
+  contents: write
+  
 on:
   schedule:
     # 00:01 AM IST = 18:31 UTC (previous day)
