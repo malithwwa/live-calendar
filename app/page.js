@@ -110,7 +110,7 @@ const LifeCalendar = () => {
           flex-direction: column;
           justify-content: flex-end;
           align-items: center;
-          padding-bottom: 60px;
+          padding-bottom: 75px;
           font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
           color: white;
           overflow: hidden;
@@ -197,9 +197,7 @@ const LifeCalendar = () => {
 
         /* Tablet */
         @media (max-width: 768px) {
-          .calendar-container {
-            padding-bottom: 55px;
-          }
+ 
 
           .dot {
             width: 10px;
@@ -217,9 +215,7 @@ const LifeCalendar = () => {
 
         /* Large phones */
         @media (max-width: 480px) {
-          .calendar-container {
-            padding-bottom: 50px;
-          }
+       
 
           .dot {
             width: 11px;
@@ -246,18 +242,15 @@ const LifeCalendar = () => {
 
         /* iPhone 14 Pro Max (430px) */
         @media (max-width: 430px) {
-          .calendar-container {
-            padding-bottom: calc(env(safe-area-inset-bottom, 34px) + 30px);
-          }
 
           .dot {
-            width: 9.5px;
-            height: 9.5px;
+            width: 8px;
+            height: 8px;
           }
 
           .dot.today {
-            width: 9.5px;
-            height: 9.5px;
+            width: 8px;
+            height: 8px;
           }
 
           .calendar-grid {
