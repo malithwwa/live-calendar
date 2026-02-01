@@ -1,45 +1,50 @@
-name: Capture Daily Wallpaper
+name: Testing of Capture Daily Wallpaper
 
 permissions:
   contents: write
 
 on:
   schedule:
-    # 00:01 AM IST = 18:31 UTC (previous day)
-    # IST is UTC+5:30
     - cron: '31 18 * * *'
-  workflow_dispatch:  # allows manual trigger for testing
+  workflow_dispatch:
 
 jobs:
   screenshot:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout your repo
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2. Install Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      # 3. Install dependencies (Puppeteer)
       - name: Install Dependencies
         run: |
           npm install puppeteer@latest
 
-      # 4. Run the screenshot script
-      - name: Take Screenshot
-        run: node capture.js
+      # Loop: Take screenshot every 5 seconds, 5 times
+      - name: Take Screenshot Every 5 Seconds
+        run: |
+          for i in 1 2 3 4 5; do
+            echo "=== Run $i of 5 ==="
+            echo "Time: $(TZ='Asia/Kolkata' date)"
+            node capture.js
+            echo "✅ Screenshot $i done"
+            echo ""
+            if [ $i -lt 5 ]; then
+              echo "Waiting 5 seconds..."
+              sleep 5
+            fi
+          done
         env:
           VERCEL_URL: ${{ secrets.VERCEL_URL }}
 
-      # 5. Commit the new screenshot back to repo
       - name: Commit Updated Wallpaper
         run: |
           git config --global user.email "github-actions[bot]@github.com"
@@ -50,7 +55,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 6. Trigger Vercel redeploy so the new PNG is served
       - name: Trigger Vercel Redeploy
         run: |
           curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
