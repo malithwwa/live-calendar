@@ -1,42 +1,46 @@
 // capture.js
-import { launch } from 'puppeteer';
-import { join } from 'path';
+import puppeteer from 'puppeteer';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// This replaces __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 (async () => {
-  const browser = await launch({
+  const browser = await puppeteer.launch({
     headless: 'new',
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-gpu',
-      '--window-size=440,956'  // iPhone 17 Pro Max viewport
+      '--window-size=430,932'
     ]
   });
 
   const page = await browser.newPage();
 
-  // Set iPhone 14 Pro Max device metrics
   await page.setViewport({
-    width: 1320,
-    height: 2868,
-    deviceScaleFactor: 3,  // Retina = 1290x2796 actual pixels
+    width: 430,
+    height: 932,
+    deviceScaleFactor: 3,
     isMobile: true
   });
 
   const url = process.env.VERCEL_URL || 'http://localhost:3000';
-  
+
   console.log(`Screenshotting: ${url}`);
-  
+
   await page.goto(url, { waitUntil: 'networkidle0' });
 
-  // Wait for any animations to settle
   await new Promise(resolve => setTimeout(resolve, 2000));
 
-  const outputPath = join(__dirname, 'screenshots', 'wallpaper.png');
+  const outputPath = path.join(__dirname, 'screenshots', 'wallpaper.png');
 
   await page.screenshot({
     path: outputPath,
-    fullPage: false,  // only visible viewport, not scrollable content
+    fullPage: false,
     omitBackground: false
   });
 
