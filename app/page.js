@@ -38,7 +38,7 @@ const LifeCalendar = () => {
   const generateCalendarDots = () => {
     const totalDays = stats.totalDays || 365;
     const completed = stats.daysCompleted;
-    const columns = 25;
+    const columns = 17;
     const fullRows = Math.floor(totalDays / columns);
     const remainingDots = totalDays % columns;
     const allDots = [];
@@ -244,22 +244,22 @@ const LifeCalendar = () => {
         @media (max-width: 430px) {
 
           .dot {
-            width: 8px;
-            height: 8px;
+            width: 9px;
+            height: 9px;
           }
 
           .dot.today {
-            width: 8px;
-            height: 8px;
+            width: 9px;
+            height: 9px;
           }
 
           .calendar-grid {
-            gap: 5px;
+            gap: 8px;
             padding: 0 18px;
           }
 
           .calendar-row {
-            gap: 5px;
+            gap: 8px;
           }
 
           .progress-info {
