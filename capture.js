@@ -15,15 +15,15 @@ const __dirname = path.dirname(__filename);
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-gpu',
-      '--window-size=430,932'
+      '--window-size=375,812'
     ]
   });
 
   const page = await browser.newPage();
 
   await page.setViewport({
-    width: 430,
-    height: 932,
+    width: 375,
+    height: 812,
     deviceScaleFactor: 3,
     isMobile: true
   });
