@@ -365,7 +365,7 @@ const LifeCalendar = () => {
       <div className="goals-section">
         <div className="goals-title">Today Goals</div>
         <div className="goals-subtitle">
-          Learn something new that improves your life
+          Master one small task today that you struggled with yesterday.
         </div>
       </div>
     </div>
