@@ -2,55 +2,72 @@ name: Capture Daily Wallpaper
 
 permissions:
   contents: write
+  actions: read
 
 on:
   schedule:
-    # 00:01 AM IST = 18:31 UTC (previous day)
-    # IST is UTC+5:30
     - cron: '31 18 * * *'
-  workflow_dispatch:  # allows manual trigger for testing
+  workflow_dispatch:
 
 jobs:
   screenshot:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout your repo
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2. Install Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      # 3. Install dependencies (Puppeteer)
       - name: Install Dependencies
         run: |
           npm install puppeteer@latest
 
-      # 4. Run the screenshot script
       - name: Take Screenshot
         run: node capture.js
         env:
           VERCEL_URL: ${{ secrets.VERCEL_URL }}
 
-      # 5. Commit the new screenshot back to repo
+      - name: Debug Screenshot Info
+        run: |
+          echo "=== Screenshot Details ==="
+          ls -lh screenshots/wallpaper.png
+          md5sum screenshots/wallpaper.png
+          echo ""
+          echo "=== Git Status ==="
+          git status screenshots/wallpaper.png
+          echo ""
+          echo "=== Git Diff Check ==="
+          git diff screenshots/wallpaper.png || echo "No diff detected"
+
       - name: Commit Updated Wallpaper
         run: |
           git config --global user.email "github-actions[bot]@github.com"
           git config --global user.name "GitHub Actions Bot"
-          git add screenshots/wallpaper.png
-          git diff --cached --quiet || git commit -m "chore: update daily wallpaper - $(date -u +%Y-%m-%d)"
+          
+          # Check if file actually changed
+          if git diff --quiet screenshots/wallpaper.png; then
+            echo "⚠️  Screenshot is identical to previous version"
+            echo "This might mean the page isn't updating correctly"
+            # Force commit anyway with timestamp
+            git add screenshots/wallpaper.png
+            git commit -m "chore: force update wallpaper - $(date -u +%Y-%m-%d)" --allow-empty
+          else
+            echo "✅ Screenshot changed, committing"
+            git add screenshots/wallpaper.png
+            git commit -m "chore: update daily wallpaper - $(date -u +%Y-%m-%d)"
+          fi
+          
           git push origin master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 6. Trigger Vercel redeploy so the new PNG is served
       - name: Trigger Vercel Redeploy
         run: |
           curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
