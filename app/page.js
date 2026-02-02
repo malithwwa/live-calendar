@@ -1,8 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { QUOTES } from "./data/quotes";
 
 const LifeCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [num] = useState(() => Math.floor(Math.random() * 100) + 1);
+  
   const [stats, setStats] = useState({
     daysCompleted: 0,
     totalDays: 0,
@@ -365,7 +368,7 @@ const LifeCalendar = () => {
       <div className="goals-section">
         <div className="goals-title">Today Goals</div>
         <div className="goals-subtitle">
-          Master one small task today that you struggled with yesterday.
+          {QUOTES[num - 1]}
         </div>
       </div>
     </div>
