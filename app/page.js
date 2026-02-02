@@ -4,7 +4,22 @@ import { QUOTES } from "./data/quotes";
 
 const LifeCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [num] = useState(() => Math.floor(Math.random() * 100) + 1);
+  const [quote, setQuote] = useState("");
+  const isInitialMount = React.useRef(true);
+
+useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+
+      const timer = setTimeout(() => {
+        const randomIndex = Math.floor(Math.random() * QUOTES.length);
+        setQuote(QUOTES[randomIndex]);
+      }, 0);
+
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   
   const [stats, setStats] = useState({
     daysCompleted: 0,
@@ -28,8 +43,6 @@ const LifeCalendar = () => {
 
   useEffect(() => {
     const startOfYear = new Date(currentDate.getFullYear(), 0, 1, 0, 0, 0);
-    const endOfYear = new Date(currentDate.getFullYear(), 11, 31, 23, 59, 59);
-
     // Reset current date to start of today for accurate day counting
     const today = new Date(
       currentDate.getFullYear(),
@@ -57,7 +70,7 @@ const LifeCalendar = () => {
   const generateCalendarDots = () => {
     const totalDays = stats.totalDays || 365;
     const completed = stats.daysCompleted;
-    const columns = 25;
+    const columns = 17;
     const fullRows = Math.floor(totalDays / columns);
     const remainingDots = totalDays % columns;
     const allDots = [];
@@ -161,8 +174,8 @@ const LifeCalendar = () => {
           align-items: center;
           gap: 5px;
           width: 100%;
-          padding: 0 8px;
-          margin-bottom: 16px;
+          padding: 0 24px;
+          margin-bottom: 28px;
         }
 
         .calendar-row {
@@ -177,8 +190,8 @@ const LifeCalendar = () => {
 
         /* Dots */
         .dot {
-          width: 9px;
-          height: 9px;
+          width: 12px;
+          height: 12px;
           border-radius: 50%;
           background: rgba(255, 255, 255, 0.15);
           flex-shrink: 0;
@@ -211,18 +224,15 @@ const LifeCalendar = () => {
           font-weight: 400;
           color: rgba(255, 255, 255, 0.5);
           line-height: 1.5;
-          padding: 0 8px;
+          padding: 0 20px;
         }
 
         /* Tablet */
         @media (max-width: 768px) {
-          .calendar-container {
-            padding-bottom: 55px;
-          }
 
           .dot {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
           }
 
           .calendar-grid {
@@ -236,18 +246,16 @@ const LifeCalendar = () => {
 
         /* Large phones */
         @media (max-width: 480px) {
-          .calendar-container {
-            padding-bottom: 50px;
-          }
+
 
           .dot {
-            width: 7px;
-            height: 7px;
+            width: 11px;
+            height: 11px;
           }
 
           .calendar-grid {
             gap: 4px;
-            padding: 0 8px;
+            padding: 0 20px;
           }
 
           .calendar-row {
@@ -265,31 +273,28 @@ const LifeCalendar = () => {
 
         /* iPhone 14 Pro Max (430px) */
         @media (max-width: 430px) {
-          .calendar-container {
-            padding-bottom: calc(env(safe-area-inset-bottom, 34px) + 30px);
-          }
 
           .dot {
-            width: 6px;
-            height: 6px;
+            width: 9px;
+            height: 9px;
           }
 
           .dot.today {
-            width: 7px;
-            height: 7px;
+            width: 9px;
+            height: 9px;
           }
 
           .calendar-grid {
-            gap: 3.5px;
-            padding: 0 6px;
+            gap: 8px;
+            padding: 0 18px;
           }
 
           .calendar-row {
-            gap: 3.5px;
+            gap: 8px;
           }
 
           .progress-info {
-            margin-bottom: 12px;
+            margin-bottom: 20px;
           }
 
           .goals-section {
@@ -303,56 +308,10 @@ const LifeCalendar = () => {
 
           .goals-subtitle {
             font-size: 13px;
-            padding: 0;
+            padding: 0 10px;
           }
         }
-
-        /* iPhone SE / smaller (375px and below) */
-        @media (max-width: 375px) {
-          .calendar-container {
-            padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 24px);
-          }
-
-          .dot {
-            width: 5.5px;
-            height: 5.5px;
-          }
-
-          .dot.today {
-            width: 6.5px;
-            height: 6.5px;
-          }
-
-          .calendar-grid {
-            gap: 3px;
-            padding: 0 14px;
-          }
-
-          .calendar-row {
-            gap: 3px;
-          }
-
-          .progress-info {
-            margin-bottom: 10px;
-          }
-
-          .percent-complete {
-            font-size: 14px;
-          }
-
-          .days-left {
-            font-size: 12px;
-          }
-
-          .goals-title {
-            font-size: 11px;
-          }
-
-          .goals-subtitle {
-            font-size: 12px;
-          }
-        }
-      `}</style>
+    `}</style>
 
       <div className="progress-info">
         <div className="percent-complete">
@@ -368,7 +327,7 @@ const LifeCalendar = () => {
       <div className="goals-section">
         <div className="goals-title">Today Goals</div>
         <div className="goals-subtitle">
-          {QUOTES[num - 1]}
+          {quote ? quote : "Preparing the Goal..."}
         </div>
       </div>
     </div>
