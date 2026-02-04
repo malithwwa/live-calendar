@@ -5,22 +5,6 @@ import { QUOTES } from "./data/quotes";
 const LifeCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [quote, setQuote] = useState("");
-  const isInitialMount = React.useRef(true);
-
-useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-
-      const timer = setTimeout(() => {
-        const randomIndex = Math.floor(Math.random() * QUOTES.length);
-        setQuote(QUOTES[randomIndex]);
-      }, 0);
-
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
-  
   const [stats, setStats] = useState({
     daysCompleted: 0,
     totalDays: 0,
@@ -30,10 +14,28 @@ useEffect(() => {
 
   const IPHONE_GREEN = "#34C759";
 
+  // Initialize quote on mount (fresh on every refresh)
   useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * QUOTES.length);
+    setQuote(QUOTES[randomIndex]);
+  }, []);
+
+  // Update current date every second AND check for midnight
+  useEffect(() => {
+    let lastDay = new Date().getDate();
+
     const timer = setInterval(() => {
-      setCurrentDate(new Date());
+      const now = new Date();
+      setCurrentDate(now);
+
+      // Check if day changed (crossed midnight)
+      if (now.getDate() !== lastDay) {
+        lastDay = now.getDate();
+        // Force re-render by updating state
+        console.log('New day detected - updating calendar');
+      }
     }, 1000);
+
     return () => clearInterval(timer);
   }, []);
 
@@ -41,8 +43,10 @@ useEffect(() => {
     return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
   };
 
+  // Calculate stats based on current date - runs whenever currentDate changes
   useEffect(() => {
     const startOfYear = new Date(currentDate.getFullYear(), 0, 1, 0, 0, 0);
+    
     // Reset current date to start of today for accurate day counting
     const today = new Date(
       currentDate.getFullYear(),
@@ -50,12 +54,11 @@ useEffect(() => {
       currentDate.getDate(),
       0,
       0,
-      0,
+      0
     );
 
     const totalDays = 365 + (isLeapYear(currentDate.getFullYear()) ? 1 : 0);
-    const daysPassed =
-      Math.floor((today - startOfYear) / (1000 * 60 * 60 * 24)) + 1; // +1 because day 1 is Jan 1
+    const daysPassed = Math.floor((today - startOfYear) / (1000 * 60 * 60 * 24)) + 1;
     const daysLeft = totalDays - daysPassed;
     const percentComplete = ((daysPassed / totalDays) * 100).toFixed(1);
 
@@ -85,13 +88,13 @@ useEffect(() => {
           <div
             key={i}
             className={`dot ${isCompleted ? "completed" : ""} ${isToday ? "today" : ""}`}
-          />,
+          />
         );
       }
       allDots.push(
         <div key={`row-${row}`} className="calendar-row">
           {rowDots}
-        </div>,
+        </div>
       );
     }
 
@@ -105,13 +108,13 @@ useEffect(() => {
           <div
             key={i}
             className={`dot ${isCompleted ? "completed" : ""} ${isToday ? "today" : ""}`}
-          />,
+          />
         );
       }
       allDots.push(
         <div key="last-row" className="calendar-row last-row">
           {lastRowDots}
-        </div>,
+        </div>
       );
     }
 
@@ -229,7 +232,6 @@ useEffect(() => {
 
         /* Tablet */
         @media (max-width: 768px) {
-
           .dot {
             width: 10px;
             height: 10px;
@@ -246,8 +248,6 @@ useEffect(() => {
 
         /* Large phones */
         @media (max-width: 480px) {
-
-
           .dot {
             width: 11px;
             height: 11px;
@@ -273,7 +273,6 @@ useEffect(() => {
 
         /* iPhone 14 Pro Max (430px) */
         @media (max-width: 430px) {
-
           .dot {
             width: 9px;
             height: 9px;
@@ -311,7 +310,7 @@ useEffect(() => {
             padding: 0 10px;
           }
         }
-    `}</style>
+      `}</style>
 
       <div className="progress-info">
         <div className="percent-complete">
@@ -327,7 +326,7 @@ useEffect(() => {
       <div className="goals-section">
         <div className="goals-title">Today Goals</div>
         <div className="goals-subtitle">
-          {quote ? quote : "Preparing the Goal..."}
+          {quote || "Preparing the Goal..."}
         </div>
       </div>
     </div>
