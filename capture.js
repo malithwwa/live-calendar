@@ -4,7 +4,6 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// This replaces __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -15,7 +14,8 @@ const __dirname = path.dirname(__filename);
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-gpu',
-      '--window-size=375,812'
+      '--window-size=375,812',
+      '--disable-dev-shm-usage'
     ]
   });
 
@@ -29,12 +29,30 @@ const __dirname = path.dirname(__filename);
   });
 
   const url = process.env.VERCEL_URL || 'http://localhost:3000';
+  const urlWithTimestamp = `${url}?t=${Date.now()}`; // Cache-busting
 
-  console.log(`Screenshotting: ${url}`);
+  console.log(`Screenshotting: ${urlWithTimestamp}`);
+  console.log(`Screenshot time: ${new Date().toISOString()}`);
 
-  await page.goto(url, { waitUntil: 'networkidle0' });
+  // Navigate to the page
+  await page.goto(urlWithTimestamp, { 
+    waitUntil: 'networkidle0',
+    timeout: 30000 
+  });
 
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  // Wait for React to fully calculate Sri Lankan timezone date
+  await new Promise(resolve => setTimeout(resolve, 5000));
+
+  // Grab the page content to verify correct date is showing
+  const pageText = await page.evaluate(() => {
+    const percent = document.querySelector('.percent-complete')?.textContent;
+    const daysLeft = document.querySelector('.days-left')?.textContent;
+    return { percent, daysLeft };
+  });
+
+  console.log(`Page content captured:`);
+  console.log(`  Percent: ${pageText.percent}`);
+  console.log(`  Days left: ${pageText.daysLeft}`);
 
   const outputPath = path.join(__dirname, 'screenshots', 'wallpaper.png');
 
@@ -44,7 +62,10 @@ const __dirname = path.dirname(__filename);
     omitBackground: false
   });
 
-  console.log(`Screenshot saved to: ${outputPath}`);
+  // Log the saved file size to confirm image is valid
+  const stats = fs.statSync(outputPath);
+  console.log(`Screenshot saved: ${outputPath}`);
+  console.log(`File size: ${(stats.size / 1024).toFixed(2)} KB`);
 
   await browser.close();
 })();

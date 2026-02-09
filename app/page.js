@@ -3,7 +3,12 @@ import React, { useState, useEffect } from "react";
 import { QUOTES } from "./data/quotes";
 
 const LifeCalendar = () => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  // Get current date in Sri Lankan timezone
+  const getSriLankanDate = () => {
+    return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Colombo" }));
+  };
+
+  const [currentDate, setCurrentDate] = useState(getSriLankanDate());
   const [quote, setQuote] = useState("");
   const [stats, setStats] = useState({
     daysCompleted: 0,
@@ -20,19 +25,18 @@ const LifeCalendar = () => {
     setQuote(QUOTES[randomIndex]);
   }, []);
 
-  // Update current date every second AND check for midnight
+  // Update current date every second using Sri Lankan timezone
   useEffect(() => {
-    let lastDay = new Date().getDate();
+    let lastDay = getSriLankanDate().getDate();
 
     const timer = setInterval(() => {
-      const now = new Date();
-      setCurrentDate(now);
+      const slDate = getSriLankanDate();
+      setCurrentDate(slDate);
 
-      // Check if day changed (crossed midnight)
-      if (now.getDate() !== lastDay) {
-        lastDay = now.getDate();
-        // Force re-render by updating state
-        console.log('New day detected - updating calendar');
+      // Check if day changed (crossed midnight in Sri Lanka)
+      if (slDate.getDate() !== lastDay) {
+        lastDay = slDate.getDate();
+        console.log('New day detected in Sri Lanka - updating calendar');
       }
     }, 1000);
 
@@ -43,7 +47,7 @@ const LifeCalendar = () => {
     return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
   };
 
-  // Calculate stats based on current date - runs whenever currentDate changes
+  // Calculate stats based on Sri Lankan date
   useEffect(() => {
     const startOfYear = new Date(currentDate.getFullYear(), 0, 1, 0, 0, 0);
     
@@ -68,6 +72,9 @@ const LifeCalendar = () => {
       percentComplete,
       daysLeft,
     });
+
+    // Log for debugging in Puppeteer screenshot
+    console.log(`SL Date: ${currentDate.toDateString()}, Day ${daysPassed}/${totalDays}, ${percentComplete}% complete`);
   }, [currentDate]);
 
   const generateCalendarDots = () => {
